@@ -77,14 +77,6 @@ class User:
             )
         else:
             logger.debug("Creating user")
-            params = find_user_params(self.user.manager)
-            response = requests.get(url, headers=headers, params=params)
-            if response.status_code == 200:
-                logger.debug("Manager found")
-                manager = response.json()
-                self.user.manager_id = manager["value"][0]["id"]
-            else:
-                logger.error("Manager not found")
 
             request = {
                 "accountEnabled": True,
@@ -110,27 +102,44 @@ class User:
                 displayname=userdata["value"][0]["displayName"],
                 message="User already exists"
             )
-
             if self.user.manager_id is not None:
-                manager_request = assign_manager_request(user_response.user_id, self.user.manager_id)
-                response = requests.put(url, headers=headers, json=manager_request)
-                if response.status_code == 204:
-                    logger.debug("Manager assigned")
+                params = find_user_params(self.user.manager)
+                response = requests.get(url, headers=headers, params=params)
+                if response.status_code == 200:
+                    logger.debug("Manager found")
+                    user_response.message += "\nManager found"
+                    manager = response.json()
+                    self.user.manager_id = manager["value"][0]["id"]
+
+                    manager_request = assign_manager_request(user_response.user_id, self.user.manager_id)
+                    response = requests.put(url, headers=headers, json=manager_request)
+                    if response.status_code == 204:
+                        logger.debug("Manager assigned")
+                        user_response.message += "\nManager assigned"
+                    else:
+                        logger.error("Manager not assigned")
+                        user_response.message += "\nManager not assigned"
                 else:
-                    logger.error("Manager not assigned")
+                    logger.error("Manager not found")
+                    user_response.message += "\nManager not found"
+
 
             license_request = assign_license_request(user_response.user_id)
             response = requests.post(url, headers=headers, json=license_request)
             if response.status_code == 200:
                 logger.debug("License assigned")
+                user_response.message += "\nLicense assigned"
             else:
                 logger.error("License not assigned")
+                user_response.message += "\nLicense not assigned"
             
             # Calling the function to assign the user to a group
             group_result = assign_user_group(user_response.username, self.user.cloned_user, ms_token)
             if group_result:
-                logger.debug("User assigned to group")
+                logger.debug("User assigned to groups")
+                user_response.message += "\nUser assigned to groups"
             else:
-                logger.error("User not assigned to group")
-                
+                logger.error("User not assigned to groups")
+                user_response.message += "\nUser not assigned to groups"
+
         return user_response
