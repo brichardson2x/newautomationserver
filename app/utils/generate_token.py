@@ -8,7 +8,7 @@ logger = setup_logging()
 async def generate_token():
     logger.debug("Generating token")
 
-    url = settings.MS_API_URL.format(tenant_id=settings.MS_TENANT_ID)
+    url = settings.MS_API_TOKEN_URL.format(tenant_id=settings.MS_TENANT_ID)
     payload = {
         "client_id": settings.MS_API_CLIENT_ID,
         "scope": settings.MS_API_SCOPE,

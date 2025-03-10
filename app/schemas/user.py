@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, EmailStr
 from typing import Optional, Dict
 from app.core.logging import setup_logging
 from app.core.config import settings
@@ -12,15 +12,18 @@ def generate_email(firstname: str, lastname: str, domain: str = "daxko.com") -> 
 class UserSchema(BaseModel):
     logger.debug("Setting up UserSchema")
     user_id: Optional[str] = None
-    username: Optional[str] = None
-    email: Optional[str] = None
+    username: Optional[EmailStr] = None
+    nickname: Optional[str] = None
+    email: Optional[EmailStr] = None
     domain: str = settings.DEFAULT_DOMAIN
     title: Optional [str] = None
     department: Optional[str] = None
+    displayname: Optional[str] = None
     firstname: str
     lastname: str
     middle_name: Optional[str] = None
     manager: Optional[str] = None
+    manager_id: Optional[str] = None
     cloned_user: Optional[str] = None
     groups: Optional[Dict] = None
     password: str = settings.DEFAULT_PASSWORD
@@ -34,5 +37,16 @@ class UserSchema(BaseModel):
 
         if self.username is None:
             self.username = generated
+
+        if self.nickname is None:
+            self.nickname = self.username.split("@")[0]
             
         return self
+    
+class UserResponse(BaseModel):
+    logger.debug("Setting up UserResponse")
+    username: str
+    email: str
+    user_id: str
+    displayname: str
+    message: Optional[str] = None

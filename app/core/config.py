@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Dict, List
 import os
 from app.core.logging import setup_logging
 
@@ -11,10 +12,14 @@ class Settings(BaseSettings):
     MS_TENANT_ID: str
     MS_API_CLIENT_ID: str
     MS_API_CLIENT_SECRET: str
-    MS_API_URL: str = "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    MS_API_TOKEN_URL: str = "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+    MS_API_URL: str = "https://graph.microsoft.com/v1.0"
     MS_API_SCOPE: str = "https://graph.microsoft.com/.default"
     DEFAULT_PASSWORD: str
     DEFAULT_DOMAIN: str
+    ASSIGNED_LICENSES: List[Dict[str, str]]
+    SERVICE_ACCOUNT: str
+    SERVICE_ACCOUNT_PASSWORD: str
 
     class Config:
         env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
