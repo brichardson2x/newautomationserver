@@ -2,7 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG')
 
 def setup_logging():
     
@@ -13,9 +13,9 @@ def setup_logging():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    # log_file_handler = RotatingFileHandler("/var/log/myautomation/app.log", maxBytes=1024*1024, backupCount=3)
-    # log_file_handler.setFormatter(formatter)
-    # logger.addHandler(log_file_handler)
+    log_file_handler = RotatingFileHandler("app.log", maxBytes=1024*1024, backupCount=3)
+    log_file_handler.setFormatter(formatter)
+    logger.addHandler(log_file_handler)
 
     logger.setLevel(LOG_LEVEL)
 
