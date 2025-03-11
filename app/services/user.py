@@ -49,7 +49,7 @@ def assign_user_group(user_name: str, cloned_user: str, bearer_token: str):
 
 
 
-class User:
+class UserService:
     def __init__(self, user: UserSchema):
         logger.debug("Setting up User")
         self.user = user

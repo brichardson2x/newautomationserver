@@ -8,6 +8,7 @@ logger = setup_logging()
 class Settings(BaseSettings):
     logger.debug("Setting up Settings")
     APP_NAME: str = "Automation App"
+    VERSION: str = "0.1.0"
     API_SECRET_KEY: str
     MS_TENANT_ID: str
     MS_API_CLIENT_ID: str
@@ -20,6 +21,9 @@ class Settings(BaseSettings):
     ASSIGNED_LICENSES: List[Dict[str, str]]
     SERVICE_ACCOUNT: str
     SERVICE_ACCOUNT_PASSWORD: str
+    FASTAPI_DEBUG: bool
+    FASTAPI_HOST: str
+    FASTAPI_PORT: int
 
     class Config:
         env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
