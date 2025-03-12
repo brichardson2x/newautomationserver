@@ -113,13 +113,25 @@ class UserService:
                 "mail": self.user.email,
             }
             userdata = requests.post(url, headers=headers, json=request)
-            user_response = UserResponse(
-                username=userdata["value"][0]["userPrincipalName"],
-                email=userdata["value"][0]["mail"],
-                user_id=userdata["value"][0]["id"],
-                displayname=userdata["value"][0]["displayName"],
-                message="User already exists"
-            )
+            if userdata.status_code == 201:
+                logger.debug("User created")
+                userdata = userdata.json()
+                user_response = UserResponse(
+                    username=userdata["value"][0]["userPrincipalName"],
+                    email=userdata["value"][0]["mail"],
+                    user_id=userdata["value"][0]["id"],
+                    displayname=userdata["value"][0]["displayName"],
+                    message="User already exists"
+                )
+            else:
+                logger.error("User not created")
+                user_response = UserResponse(
+                    username=self.user.username,
+                    email=self.user.email,
+                    user_id="",
+                    displayname="self.user.displayname",
+                    message="User not created"
+                )
             if self.user.manager_id is not None:
                 params = find_user_params(self.user.manager)
                 response = requests.get(url, headers=headers, params=params)
