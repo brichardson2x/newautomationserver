@@ -2,10 +2,12 @@ from app.core.logging import setup_logging
 from app.core.config import settings
 from app.schemas.user import UserSchema, UserResponse
 from app.utils.generate_token import generate_token
+from fastapi import HTTPException
 import requests
 import os
 import subprocess
 import json
+
 
 logger = setup_logging()
 
@@ -75,6 +77,11 @@ class UserService:
     def create_user(self):
         logger.debug("Creating user")
         ms_token = generate_token()
+
+        if not ms_token:
+            logger.error("Token not generated")
+            raise HTTPException(status_code="401", detrail="Token not generated")
+
         headers = {
             "Authorization": f"Bearer {ms_token}",
             "Content-Type": "application/json"
