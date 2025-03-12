@@ -9,6 +9,7 @@ import subprocess
 import json
 
 
+
 logger = setup_logging()
 
 def find_user_params(user_displayname: str):
@@ -74,13 +75,10 @@ class UserService:
         logger.debug("Setting up User")
         self.user = user
 
-    def create_user(self):
+    async def create_user(self):
         logger.debug("Creating user")
-        ms_token = generate_token()
-
-        if not ms_token:
-            logger.error("Token not generated")
-            raise HTTPException(status_code="401", detrail="Token not generated")
+        ms_token = await generate_token()
+        logger.debug(f"Token: {ms_token}")
 
         headers = {
             "Authorization": f"Bearer {ms_token}",

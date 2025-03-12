@@ -24,5 +24,5 @@ async def generate_token():
             logger.debug("Token generated")
             return response.json().get("access_token")
         except Exception as e:
-            logger.error(f"Error generating token: {e}")
-            raise HTTPException(status_code=500, detail="Error generating token")
+            logger.error(f"Error generating token")
+            raise HTTPException(status_code=401, detail="Token could not be generated")

@@ -12,4 +12,4 @@ router = APIRouter(dependencies=[Depends(read_security)])
 async def create_user(user: UserSchema):
     logger.debug("Entered create_user endpoint")
     user = UserService(user)
-    return user.create_user()
+    return await user.create_user()
