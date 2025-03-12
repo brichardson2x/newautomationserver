@@ -4,10 +4,10 @@ from app.core.logging import setup_logging
 
 logger = setup_logging()
 
-async def read_security(api_key: str):
+async def read_security(api_key: str = Header(...)):
     logger.debug("Checking API Key")
 
-    if api_key != settings.API_KEY:
+    if api_key != settings.API_SECRET_KEY:
         logger.error("Invalid API Key")
         raise HTTPException(status_code=403, detail="Invalid API Key")
     
@@ -15,5 +15,5 @@ async def read_security(api_key: str):
     return {"message": "Access granted"}
     
 
-async def get_settings():
-    return settings
+#async def get_settings():
+    #return settings

@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import Dict, List
+from typing import Dict, List, Any
 import os
 from app.core.logging import setup_logging
 
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     MS_API_SCOPE: str = "https://graph.microsoft.com/.default"
     DEFAULT_PASSWORD: str
     DEFAULT_DOMAIN: str
-    ASSIGNED_LICENSES: List[Dict[str, str]]
+    ASSIGNED_LICENSES: Any
     SERVICE_ACCOUNT: str
     SERVICE_ACCOUNT_PASSWORD: str
     FASTAPI_DEBUG: bool

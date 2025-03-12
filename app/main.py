@@ -15,12 +15,12 @@ app = FastAPI(
 app.include_router(api_router, prefix="/api/v1")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host=settings.FASTAPI_HOST, port=settings.FASTAPI_PORT, reload=settings.FASTAPI_DEBUG)
+    uvicorn.run("app.main:app", host=settings.FASTAPI_HOST, port=settings.FASTAPI_PORT, reload=settings.FASTAPI_DEBUG)
 
 @app.get("/", tags=["Root"])
 async def root():
     logger.debug("Entered root endpoint")
-    return {"message": "Welcome to the Salon Management API"}
+    return {"message": "Welcome to the Automation API"}
 
 
 

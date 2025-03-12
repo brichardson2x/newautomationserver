@@ -5,6 +5,7 @@ from app.utils.generate_token import generate_token
 import requests
 import os
 import subprocess
+import json
 
 logger = setup_logging()
 
@@ -23,13 +24,30 @@ def assign_manager_request(user_id: str, manager_id: str):
         "@odata.id": f"{settings.MS_API_URL}/users/{user_id}/manager/$ref"
     }
 
-def assign_license_request(user_id: str):
+#def assign_license_request(user_id: str):
     logger.debug("Assigning license")
     add_licenses = [{"disabledPlans": [], "skuId": license["skuId"]} for license in settings.ASSIGNED_LICENSES]
     return {
         "addLicenses": add_licenses,
         "removeLicenses": []
     }
+
+#def assign_license_request(user_id: str):
+    logger.debug("Assigning license")
+
+    assigned_licenses = json.loads(settings.ASSIGNED_LICENSES)
+    
+    add_licenses = [{"disabledPlans": license.get("disabledPlans", []), "skuId": license["skuId"]} for license in assigned_licenses]
+    
+    return {
+        "addLicenses": add_licenses,
+        "removeLicenses": []
+    }
+
+def assign_license_request(user_id: str):
+    logger.debug("Assigning license")
+    add_licenses = settings.ASSIGNED_LICENSES
+    return add_licenses
 
 def assign_user_group(user_name: str, cloned_user: str, bearer_token: str):
     logger.debug("Assigning user to group")
