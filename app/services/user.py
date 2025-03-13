@@ -22,10 +22,10 @@ def find_user_params(user_displayname: str):
     }
     return params
 
-def assign_manager_request(user_id: str, manager_id: str):
+def assign_manager_request(manager_id: str):
     logger.debug("Assigning manager")
     return {
-        "@odata.id": f"{settings.MS_API_URL}/users/{user_id}/manager/$ref"
+        "@odata.id": f"{settings.MS_API_URL}/users/{manager_id}"
     }
 
 #def assign_license_request(user_id: str):
@@ -58,23 +58,29 @@ def assign_user_group(user_name: str, cloned_user: str, bearer_token: str):
     try:
         script_path = Path(__file__).resolve().parent.parent / "scripts" / "CopyGroups.ps1"
         command = ["pwsh.exe", "-ExecutionPolicy", "Bypass", "-File", script_path, bearer_token, settings.SERVICE_ACCOUNT, settings.SERVICE_ACCOUNT_PASSWORD, user_name, cloned_user]
-        result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        
-        for line_out in result.stdout:
-            logger.debug(line_out.strip())
+        #result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        logger.debug(result.stdout)
+        if result.stderr:
+            logger.error(result.stderr)
 
-        for line_err in result.stderr:
-            logger.error(line_err.strip())
-
-        result.wait()
-
-        logger.debug(result.stdout.strip())
         return True
+    
+        #for line_out in result.stdout:
+            #logger.debug(line_out.strip())
+
+
+
+        #result.wait()
+        
     except subprocess.CalledProcessError as e:
         logger.error(f"Error assigning user to group: {e}")
         return False
     except FileNotFoundError as e:
         logger.error(f"Error finding script: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexecpected error assigning user to group: {e}")
         return False
 
 
@@ -147,7 +153,7 @@ class UserService:
                     email=userdata.get("mail"),
                     user_id=userdata.get("id"),
                     displayname=userdata.get("displayName"),
-                    message="User already exists"
+                    message="User created"
                 )
                 logger.debug(user_response)
             elif 400 <= userdata.status_code < 500:
@@ -157,7 +163,7 @@ class UserService:
                 logger.error("User not created due to Microsoft Server Error")
                 raise HTTPException(status_code=500, detail="User could not be created due to Microsoft Server Error, try again later")
             
-            if self.user.manager_id is not None:
+            if self.user.manager is not None:
                 params = find_user_params(self.user.manager)
                 response = requests.get(url, headers=headers, params=params)
                 if response.status_code == 200:
@@ -165,11 +171,14 @@ class UserService:
                     user_response.message += ". Manager found"
                     manager = response.json()
                     self.user.manager_id = manager["value"][0]["id"]
-
+                    logger.debug(self.user.manager_id)
+                    logger.debug(user_response.user_id)
                     url = f"{settings.MS_API_URL}/users/{user_response.user_id}/manager/$ref"
-
-                    manager_request = assign_manager_request(user_response.user_id, self.user.manager_id)
-                    response = requests.put(url, headers=headers, json=manager_request)
+                    logger.debug(url)
+                    manager_request = assign_manager_request(self.user.manager_id)
+                    manager_request = json.dumps(manager_request)
+                    logger.debug(manager_request)
+                    response = requests.put(url, headers=headers, data=manager_request)
 
                     if response.status_code == 204:
                         logger.debug("Manager assigned")
@@ -212,7 +221,7 @@ class UserService:
                     user_response.message += ". User was assigned to groups"
                 else:
                     logger.error("User not assigned to groups")
-                    user_response.message += ". User could not assigned to groups"
+                    user_response.message += ". User could not be assigned to groups"
             else: 
                 logger.debug("No cloned user")
                 user_response.message += ". No cloned user, so no groups assigned"

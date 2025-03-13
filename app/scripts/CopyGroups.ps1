@@ -7,7 +7,7 @@ param (
     [string]$CloneUserAccount
 )
 
-
+$ErrorActionPreference = "Stop"
 $requiredModules = @("ExchangeOnlineManagement", "Microsoft.Graph.Users", "Microsoft.Graph.Groups")
 
 foreach ($module in $requiredModules) {
@@ -58,13 +58,13 @@ if ($CloneUserAccount -match "\s") {
 }
 
 Write-Host "Splitting groups into Graph and Exchange"
-Write-Host "$CloneId"
+
 
 $GraphGroups = @()
 $ExchangeGroups = @()
 
 $ClonedGroups | ForEach-Object {
-$group = Get-MgGroup -GroupId $_.IdUpdateE
+$group = Get-MgGroup -GroupId $_.Id
     if ($group.GroupTypes -eq "Unified") {
         $GraphGroups += $group.Id
     } elseif ($group.MailEnabled) {
@@ -73,9 +73,6 @@ $group = Get-MgGroup -GroupId $_.IdUpdateE
         $GraphGroups += $group.Id
     }
 }
-
-Write-Host "$ExchangeGroups"
-Write-Host "$GraphGroups"
 
 Write-Host "Checking if Target User passed is display name or UPN"
 if ($TargetUserAccount -match "\s") {
