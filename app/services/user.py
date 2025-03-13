@@ -100,7 +100,7 @@ class UserService:
                 displayname=userdata["value"][0]["displayName"],
                 message="User already exists"
             )
-        elif response.status_code == 403:
+        elif 400 <= response.status_code < 500:
             logger.debug("No permission in Microsoft")
             raise HTTPException(status_code=403, detail="Please check your Microsoft app permissions")
         else:
@@ -133,15 +133,13 @@ class UserService:
                     displayname=userdata["value"][0]["displayName"],
                     message="User already exists"
                 )
+            elif 400 <= userdata.status_code < 500:
+                logger.error("User not created due to permissions")
+                raise HTTPException(status_code=403, detail="Please check your Microsoft app permissions")
             else:
-                logger.error("User not created")
-                user_response = UserResponse(
-                    username=self.user.username,
-                    email=self.user.email,
-                    user_id="",
-                    displayname="self.user.displayname",
-                    message="User not created"
-                )
+                logger.error("User not created due to Microsoft Server Error")
+                raise HTTPException(status_code=500, detail="User could not be created due to Microsoft Server Error, try again later")
+            
             if self.user.manager_id is not None:
                 params = find_user_params(self.user.manager)
                 response = requests.get(url, headers=headers, params=params)
@@ -159,9 +157,12 @@ class UserService:
                     if response.status_code == 204:
                         logger.debug("Manager assigned")
                         user_response.message += "\nManager assigned"
+                    elif 400 <= response.status_code < 500:
+                        logger.error("Manager not assigned due to permissions")
+                        user_response.message += "\nManager not assigned due to permissions in Entra App"
                     else:
-                        logger.error("Manager not assigned")
-                        user_response.message += "\nManager not assigned"
+                        logger.error("Manager not assigned due to Microsoft Server Error")
+                        user_response.message += "\nManager not assigned due to Microsoft Server Error"
                 else:
                     logger.error("Manager not found")
                     user_response.message += "\nManager not found"
@@ -174,17 +175,20 @@ class UserService:
             if response.status_code == 200:
                 logger.debug("License assigned")
                 user_response.message += "\nLicense assigned"
+            elif 400 <= response.status_code < 500:
+                logger.error("License not assigned due to permissions")
+                user_response.message += "\nLicense not assigned due to permissions in Entra App"
             else:
-                logger.error("License not assigned")
-                user_response.message += "\nLicense not assigned"
+                logger.error("License not assigned due to Microsoft Server Error")
+                user_response.message += "\nLicense not assigned due to Microsoft Server Error, please addlicenses manually"
             
             # Calling the function to assign the user to a group
             group_result = assign_user_group(user_response.username, self.user.cloned_user, ms_token)
             if group_result:
                 logger.debug("User assigned to groups")
-                user_response.message += "\nUser assigned to groups"
+                user_response.message += "\nUser was assigned to groups"
             else:
                 logger.error("User not assigned to groups")
-                user_response.message += "\nUser not assigned to groups"
+                user_response.message += "\nUser could not assigned to groups"
 
         return user_response

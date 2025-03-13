@@ -1,9 +1,10 @@
 from pydantic_settings import BaseSettings
-from typing import Dict, List, Any
-import os
+from typing import Any
+from pathlib import Path
 from app.core.logging import setup_logging
 
 logger = setup_logging()
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings(BaseSettings):
     logger.debug("Setting up Settings")
@@ -26,6 +27,7 @@ class Settings(BaseSettings):
     FASTAPI_PORT: int
 
     class Config:
-        env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+        env_file = BASE_DIR /  ".env"
+        env_file_encoding = "utf-8"
 
 settings = Settings()
