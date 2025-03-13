@@ -151,8 +151,11 @@ class UserService:
                     manager = response.json()
                     self.user.manager_id = manager["value"][0]["id"]
 
+                    url = f"{settings.MS_API_URL}/users/{user_response.user_id}/manager/$ref"
+
                     manager_request = assign_manager_request(user_response.user_id, self.user.manager_id)
                     response = requests.put(url, headers=headers, json=manager_request)
+
                     if response.status_code == 204:
                         logger.debug("Manager assigned")
                         user_response.message += "\nManager assigned"
@@ -165,6 +168,8 @@ class UserService:
 
 
             license_request = assign_license_request(user_response.user_id)
+            url = f"{settings.MS_API_URL}/users/{user_response.user_id}/assignLicense"
+
             response = requests.post(url, headers=headers, json=license_request)
             if response.status_code == 200:
                 logger.debug("License assigned")

@@ -40,6 +40,9 @@ class UserSchema(BaseModel):
 
         if self.nickname is None:
             self.nickname = self.username.split("@")[0]
+        
+        if self.displayname is None:
+            self.displayname = f"{self.firstname} {self.lastname}"
             
         return self
     
