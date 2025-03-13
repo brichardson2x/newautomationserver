@@ -45,6 +45,8 @@ class UserSchema(BaseModel):
             self.displayname = f"{self.firstname} {self.lastname}"
             
         return self
+
+
     
 class UserResponse(BaseModel):
     logger.debug("Setting up UserResponse")
@@ -53,3 +55,8 @@ class UserResponse(BaseModel):
     user_id: str
     displayname: str
     message: Optional[str] = None
+    
+    class Config:
+        json_encoders = {
+            type(None): lambda v: None  # Explicitly serialize None as null
+        }

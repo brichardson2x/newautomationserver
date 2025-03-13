@@ -3,6 +3,7 @@ from app.core.config import settings
 from app.schemas.user import UserSchema, UserResponse
 from app.utils.generate_token import generate_token
 from fastapi import HTTPException
+from pathlib import Path
 import requests
 import os
 import subprocess
@@ -55,9 +56,18 @@ def assign_license_request(user_id: str):
 def assign_user_group(user_name: str, cloned_user: str, bearer_token: str):
     logger.debug("Assigning user to group")
     try:
-        script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts", "CopyGroups.ps1")
-        command = ["powershell.exe", "-ExecutionPolicy", "Bypass", "-File", script_path, bearer_token, settings.SERVICE_ACCOUNT, settings.SERVICE_ACCOUNT_PASSWORD, user_name, cloned_user]
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        script_path = Path(__file__).resolve().parent.parent / "scripts" / "CopyGroups.ps1"
+        command = ["pwsh.exe", "-ExecutionPolicy", "Bypass", "-File", script_path, bearer_token, settings.SERVICE_ACCOUNT, settings.SERVICE_ACCOUNT_PASSWORD, user_name, cloned_user]
+        result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        
+        for line_out in result.stdout:
+            logger.debug(line_out.strip())
+
+        for line_err in result.stderr:
+            logger.error(line_err.strip())
+
+        result.wait()
+
         logger.debug(result.stdout.strip())
         return True
     except subprocess.CalledProcessError as e:
@@ -90,9 +100,10 @@ class UserService:
 
         logger.debug(response.status_code)
 
-        if response.status_code == 200:
+        if response.status_code == 200 and response.json()["value"]:
             logger.debug("User already exists")
             userdata = response.json()
+            logger.debug(userdata)
             user_response = UserResponse(
                 username=userdata["value"][0]["userPrincipalName"],
                 email=userdata["value"][0]["mail"],
@@ -106,7 +117,7 @@ class UserService:
         else:
             logger.debug("Creating user")
 
-            request = {
+            o_request = {
                 "accountEnabled": True,
                 "displayName": self.user.displayname,
                 "mailNickname": self.user.nickname,
@@ -122,17 +133,23 @@ class UserService:
                 "surname": self.user.lastname,
                 "mail": self.user.email,
             }
-            userdata = requests.post(url, headers=headers, json=request)
+            request = json.dumps(o_request)
+            logger.debug(request)
+            userdata = requests.post(url, headers=headers, data=request)
+            logger.debug(userdata.json())
+            logger.debug(userdata.request)
+            logger.debug(userdata.status_code)
             if userdata.status_code == 201:
                 logger.debug("User created")
                 userdata = userdata.json()
                 user_response = UserResponse(
-                    username=userdata["value"][0]["userPrincipalName"],
-                    email=userdata["value"][0]["mail"],
-                    user_id=userdata["value"][0]["id"],
-                    displayname=userdata["value"][0]["displayName"],
+                    username=userdata.get("userPrincipalName"),
+                    email=userdata.get("mail"),
+                    user_id=userdata.get("id"),
+                    displayname=userdata.get("displayName"),
                     message="User already exists"
                 )
+                logger.debug(user_response)
             elif 400 <= userdata.status_code < 500:
                 logger.error("User not created due to permissions")
                 raise HTTPException(status_code=403, detail="Please check your Microsoft app permissions")
@@ -145,7 +162,7 @@ class UserService:
                 response = requests.get(url, headers=headers, params=params)
                 if response.status_code == 200:
                     logger.debug("Manager found")
-                    user_response.message += "\nManager found"
+                    user_response.message += ". Manager found"
                     manager = response.json()
                     self.user.manager_id = manager["value"][0]["id"]
 
@@ -156,39 +173,48 @@ class UserService:
 
                     if response.status_code == 204:
                         logger.debug("Manager assigned")
-                        user_response.message += "\nManager assigned"
+                        user_response.message += ". Manager assigned"
                     elif 400 <= response.status_code < 500:
                         logger.error("Manager not assigned due to permissions")
-                        user_response.message += "\nManager not assigned due to permissions in Entra App"
+                        user_response.message += ". Manager not assigned due to permissions in Entra App"
                     else:
                         logger.error("Manager not assigned due to Microsoft Server Error")
-                        user_response.message += "\nManager not assigned due to Microsoft Server Error"
+                        user_response.message += ". Manager not assigned due to Microsoft Server Error"
                 else:
                     logger.error("Manager not found")
-                    user_response.message += "\nManager not found"
+                    user_response.message += ". Manager not found"
+            else:
+                logger.debug("No manager assigned")
+                user_response.message += ". No manager assigned"
 
 
             license_request = assign_license_request(user_response.user_id)
             url = f"{settings.MS_API_URL}/users/{user_response.user_id}/assignLicense"
 
-            response = requests.post(url, headers=headers, json=license_request)
+            response = requests.post(url, headers=headers, data=license_request)
+            logger.debug(response.status_code)
+            logger.debug(response.json())
             if response.status_code == 200:
                 logger.debug("License assigned")
-                user_response.message += "\nLicense assigned"
+                user_response.message += ". License assigned"
             elif 400 <= response.status_code < 500:
                 logger.error("License not assigned due to permissions")
-                user_response.message += "\nLicense not assigned due to permissions in Entra App"
+                user_response.message += ". License not assigned due to permissions in Entra App"
             else:
                 logger.error("License not assigned due to Microsoft Server Error")
-                user_response.message += "\nLicense not assigned due to Microsoft Server Error, please addlicenses manually"
+                user_response.message += ". License not assigned due to Microsoft Server Error, please addlicenses manually"
             
             # Calling the function to assign the user to a group
-            group_result = assign_user_group(user_response.username, self.user.cloned_user, ms_token)
-            if group_result:
-                logger.debug("User assigned to groups")
-                user_response.message += "\nUser was assigned to groups"
-            else:
-                logger.error("User not assigned to groups")
-                user_response.message += "\nUser could not assigned to groups"
+            if self.user.cloned_user is not None:
+                group_result = assign_user_group(user_response.username, self.user.cloned_user, ms_token)
+                if group_result:
+                    logger.debug("User assigned to groups")
+                    user_response.message += ". User was assigned to groups"
+                else:
+                    logger.error("User not assigned to groups")
+                    user_response.message += ". User could not assigned to groups"
+            else: 
+                logger.debug("No cloned user")
+                user_response.message += ". No cloned user, so no groups assigned"
 
         return user_response
