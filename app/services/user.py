@@ -78,7 +78,6 @@ class UserService:
     async def create_user(self):
         logger.debug("Creating user")
         ms_token = await generate_token()
-        logger.debug(f"Token: {ms_token}")
 
         headers = {
             "Authorization": f"Bearer {ms_token}",
@@ -88,6 +87,9 @@ class UserService:
         params = find_user_params(f"{self.user.displayname}")
 
         response = requests.get(url, headers=headers, params=params)
+
+        logger.debug(response.status_code)
+
         if response.status_code == 200:
             logger.debug("User already exists")
             userdata = response.json()
@@ -98,6 +100,9 @@ class UserService:
                 displayname=userdata["value"][0]["displayName"],
                 message="User already exists"
             )
+        elif response.status_code == 403:
+            logger.debug("No permission in Microsoft")
+            raise HTTPException(status_code=403, detail="Please check your Microsoft app permissions")
         else:
             logger.debug("Creating user")
 
