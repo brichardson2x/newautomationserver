@@ -228,5 +228,8 @@ class UserService:
                 user_response.message += ". No cloned user, so no groups assigned"
 
         send_slack(user_response)
-
+        
+        logger.info("User created")
+        
         return user_response
+    

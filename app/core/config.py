@@ -1,13 +1,11 @@
 from pydantic_settings import BaseSettings
 from typing import Any
 from pathlib import Path
-from app.core.logging import setup_logging
 
-logger = setup_logging()
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 class Settings(BaseSettings):
-    logger.debug("Setting up Settings")
+
     APP_NAME: str = "Automation App"
     VERSION: str = "0.1.0"
     API_SECRET_KEY: str
@@ -26,6 +24,7 @@ class Settings(BaseSettings):
     FASTAPI_HOST: str
     FASTAPI_PORT: int
     SLACK_WEBHOOK_URL: str
+    LOG_LEVEL: str = "INFO"
 
     class Config:
         env_file = BASE_DIR /  ".env"
