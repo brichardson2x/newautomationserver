@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     FASTAPI_DEBUG: bool
     FASTAPI_HOST: str
     FASTAPI_PORT: int
+    SLACK_WEBHOOK_URL: str
 
     class Config:
         env_file = BASE_DIR /  ".env"

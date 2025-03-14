@@ -1,6 +1,7 @@
 from app.core.logging import setup_logging
 from app.core.config import settings
 from app.schemas.user import UserSchema, UserResponse
+from app.utils.send_slack import send_slack
 from app.utils.generate_token import generate_token
 from fastapi import HTTPException
 from pathlib import Path
@@ -225,5 +226,7 @@ class UserService:
             else: 
                 logger.debug("No cloned user")
                 user_response.message += ". No cloned user, so no groups assigned"
+
+        send_slack(user_response)
 
         return user_response
