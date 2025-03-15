@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings
 from typing import Any
 from pathlib import Path
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -30,4 +31,8 @@ class Settings(BaseSettings):
         env_file = BASE_DIR /  ".env"
         env_file_encoding = "utf-8"
 
-settings = Settings()
+try:
+    settings = Settings()  
+except Exception as e:
+    print("Error loading configuration, please make sure you have included all environmental variables required.")
+    sys.exit(1)

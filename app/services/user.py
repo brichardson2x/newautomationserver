@@ -59,12 +59,17 @@ def assign_user_group(user_name: str, cloned_user: str, bearer_token: str):
     try:
         script_path = Path(__file__).resolve().parent.parent / "scripts" / "CopyGroups.ps1"
         command = ["pwsh.exe", "-ExecutionPolicy", "Bypass", "-File", script_path, bearer_token, settings.SERVICE_ACCOUNT, settings.SERVICE_ACCOUNT_PASSWORD, user_name, cloned_user]
-        #result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
-        logger.debug(result.stdout)
-        if result.stderr:
-            logger.error(result.stderr)
+        #result = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8")
+        
+        subprocess.run(command, capture_output=True, text=True, check=True)
+        #result = subprocess.run(command, text=True, check=True)
 
+        #logger.debug(result.stdout)
+        #logger.debug(result.stderr)
+
+        #if result.stderr:
+            #logger.error(result.stderr)
+            #raise Exception(result.stderr)
         return True
     
         #for line_out in result.stdout:
@@ -75,13 +80,13 @@ def assign_user_group(user_name: str, cloned_user: str, bearer_token: str):
         #result.wait()
         
     except subprocess.CalledProcessError as e:
-        logger.error(f"Error assigning user to group: {e}")
+        logger.error(f"Error assigning user to group")
         return False
     except FileNotFoundError as e:
-        logger.error(f"Error finding script: {e}")
+        logger.error(f"Error finding script")
         return False
     except Exception as e:
-        logger.error(f"Unexecpected error assigning user to group: {e}")
+        logger.error(f"Unexecpected error assigning user to group")
         return False
 
 
@@ -157,11 +162,17 @@ class UserService:
                     message="User created"
                 )
                 logger.debug(user_response)
-            elif 400 <= userdata.status_code < 500:
+            elif userdata.status_code == 400:
+                logger.error("User not created due to invalid data, usually a password without sufficient complexity")
+                send_slack("User could not be created due to invalid data, usually a password without sufficient complexity")
+                raise HTTPException(status_code=400, detail="User could not be created due to invalid data, usually a password without sufficient complexity")
+            elif 401 <= userdata.status_code < 500:
                 logger.error("User not created due to permissions")
+                send_slack("User could not be created due to permissions, please check your Microsoft app permissions")
                 raise HTTPException(status_code=403, detail="Please check your Microsoft app permissions")
             else:
                 logger.error("User not created due to Microsoft Server Error")
+                send_slack("User could not be created due to Microsoft Server Error, try again later")
                 raise HTTPException(status_code=500, detail="User could not be created due to Microsoft Server Error, try again later")
             
             if self.user.manager is not None:
@@ -207,7 +218,10 @@ class UserService:
             if response.status_code == 200:
                 logger.debug("License assigned")
                 user_response.message += ". License assigned"
-            elif 400 <= response.status_code < 500:
+            elif response.status_code == 400:
+                logger.error("License not assigned due to invalid data")
+                user_response.message += ". License that was requested is not a valid Microsoft license SKU"
+            elif 401 <= response.status_code < 500:
                 logger.error("License not assigned due to permissions")
                 user_response.message += ". License not assigned due to permissions in Entra App"
             else:
@@ -229,7 +243,7 @@ class UserService:
 
         send_slack(user_response)
         
-        logger.info("User created")
-        
+        logger.info("User process finished")
+
         return user_response
     

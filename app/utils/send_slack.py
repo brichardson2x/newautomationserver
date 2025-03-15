@@ -5,25 +5,32 @@ import requests
 
 logger = setup_logging()
 
-def send_slack(message: UserResponse):
-    logger.debug("Sending Slack message")
+def send_slack(message):
 
-    attachments = {
-        "fields": [
-            {"title": "Message", "value": message.message, "short": True},
-            {"title": "DisplayName", "value": message.displayname, "short": True},
-            {"title": "UserID", "value": message.user_id, "short": True},
-            {"title": "Username", "value": message.username, "short": True},
-            {"title": "Email", "value": message.email, "short": True}
-        ]
-    }
+    if isinstance(message, UserResponse):
+        logger.debug("Sending Slack message")
 
-    payload = {
-        "text": "User Creation Information",
-        "attachments": [attachments]
-    }
+        attachments = {
+            "fields": [
+                {"title": "DisplayName", "value": message.displayname, "short": True},
+                {"title": "UserID", "value": message.user_id, "short": True},
+                {"title": "Username", "value": message.username, "short": True},
+                {"title": "Email", "value": message.email, "short": True},
+                {"title": "Message", "value": message.message, "short": True}
+            ]
+        }
 
-    response = requests.post(settings.SLACK_WEBHOOK, json=payload)
+        payload = {
+            "text": "User Creation Information",
+            "attachments": [attachments]
+        }
+
+    else:
+        payload = {
+            "text": message
+        }
+
+    response = requests.post(settings.SLACK_WEBHOOK_URL, json=payload)
 
     if response.status_code != 200:
         logger.error("Error sending Slack message")

@@ -1,9 +1,16 @@
 import logging
 from logging.handlers import RotatingFileHandler
-import os
 from app.core.config import settings
 
-LOG_LEVEL = os.getenv('LOG_LEVEL', settings.LOG_LEVEL)
+LOG_LEVELS = {
+    "NOTSET": logging.NOTSET,
+    "DEBUG": logging.DEBUG,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL
+}
+
 
 def setup_logging():
     
@@ -20,6 +27,6 @@ def setup_logging():
         log_file_handler.setFormatter(formatter)
         logger.addHandler(log_file_handler)
 
-        logger.setLevel(LOG_LEVEL)
+        logger.setLevel(LOG_LEVELS[settings.LOG_LEVEL])
 
     return logger

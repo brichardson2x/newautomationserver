@@ -7,7 +7,7 @@ param (
     [string]$CloneUserAccount
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "SilentlyContinue"
 $requiredModules = @("ExchangeOnlineManagement", "Microsoft.Graph.Users", "Microsoft.Graph.Groups")
 
 foreach ($module in $requiredModules) {
@@ -48,7 +48,7 @@ try {
 }
 
 Write-Host "Getting Groups from Clone User"
-
+Write-Host "$CloneUserAccount"
 if ($CloneUserAccount -match "\s") {
     $CloneId = Get-MgUser -Filter "DisplayName eq '$CloneUserAccount'" | Select-Object -First 1
     $ClonedGroups = Get-MgUserMemberof -UserId $CloneId.Id  # add group ids to variable
@@ -57,14 +57,16 @@ if ($CloneUserAccount -match "\s") {
     $ClonedGroups = Get-MgUserMemberof -UserId $CloneId.Id  # add group ids to variable
 }
 
+Write-Host "$ClonedGroups"
 Write-Host "Splitting groups into Graph and Exchange"
 
+Start-Sleep -Seconds 5
 
 $GraphGroups = @()
 $ExchangeGroups = @()
 
 $ClonedGroups | ForEach-Object {
-$group = Get-MgGroup -GroupId $_.Id
+$group = Get-MgGroup -ErrorAction SilentlyContinue -GroupId $_.Id
     if ($group.GroupTypes -eq "Unified") {
         $GraphGroups += $group.Id
     } elseif ($group.MailEnabled) {
@@ -73,6 +75,11 @@ $group = Get-MgGroup -GroupId $_.Id
         $GraphGroups += $group.Id
     }
 }
+
+Write-Host "$GraphGroups"
+Write-Host "$ExchangeGroups"
+
+Start-Sleep -Seconds 5
 
 Write-Host "Checking if Target User passed is display name or UPN"
 if ($TargetUserAccount -match "\s") {
@@ -85,17 +92,21 @@ if ($TargetUserAccount -match "\s") {
     $GraphGroups | ForEach-Object {New-MgGroupMemberByRef -ErrorAction SilentlyContinue -GroupId $_ -OdataId "https://graph.microsoft.com/v1.0/users/$TargetUPN"}    # add groups to user with graph api
     $holdon = Get-Recipient -Identity $TargetDN -ErrorAction SilentlyContinue
     while ($null -eq $holdon) {
-        Start-Sleep -Seconds 1
+        Start-Sleep -Seconds 1  
         $holdon = Get-Recipient -Identity $TargetDN -ErrorAction SilentlyContinue
     }
     Write-Host "Adding Exchange Groups to User"
     $ExchangeGroups | ForEach-Object {Add-DistributionGroupMember -ErrorAction SilentlyContinue -BypassSecurityGroupManagerCheck -Identity $_ -Member $TargetDN}  # add groups to user with exchange module
 } else {
     Write-Host "Getting User by UPN"
+    Write-Host "$TargetUserAccount"
     $TargetId = Get-MgUser -Filter "userPrincipalName eq '$TargetUserAccount'"
+    Write-Host "$($TargetId.userPrincipalName)"
     Write-Host "Getting User UPN and DN"
     $TargetUPN = $TargetId.UserPrincipalName
     $TargetDN = $TargetId.Id
+    Write-Host "$($TargetId.Id)"
+
     $holdon = Get-Recipient -Identity $TargetDN -ErrorAction SilentlyContinue
     while ($null -eq $holdon) {
         Start-Sleep -Seconds 1
@@ -106,6 +117,8 @@ if ($TargetUserAccount -match "\s") {
     Write-Host "Adding Exchange Groups to User"
     $ExchangeGroups | ForEach-Object {Add-DistributionGroupMember -ErrorAction SilentlyContinue -BypassSecurityGroupManagerCheck -Identity $_ -Member $TargetDN}   # add groups to user with exchange module
 }
+
+Start-Sleep -Seconds 5
 
 Write-Host "Check if Default User Login Policy Group exists"
 $DefaultPolicyGroup = "697ec5bf-f312-4ef2-ad34-bf830cc7d00a"
