@@ -2,7 +2,7 @@
 - create user API
 - notification via slack channel
 
-# things to add
+# Things to Add
 - rate limiting 
 - accept docker secrets 
 - user offboarding
