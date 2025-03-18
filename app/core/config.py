@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings
 from typing import Any
 from pathlib import Path
 import sys
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = BASE_DIR /  ".env"
         env_file_encoding = "utf-8"
+        secrets_dir = '/run/secrets' if os.path.exists('/run/secrets') else None
 
 try:
     settings = Settings()  

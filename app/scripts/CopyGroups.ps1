@@ -94,6 +94,11 @@ if ($TargetUserAccount -match "\s") {
     while ($null -eq $holdon) {
         Start-Sleep -Seconds 1  
         $holdon = Get-Recipient -Identity $TargetDN -ErrorAction SilentlyContinue
+        $waited += 1
+        if ($waited -gt 60) {
+            break
+            exit 1
+        }
     }
     Write-Host "Adding Exchange Groups to User"
     $ExchangeGroups | ForEach-Object {Add-DistributionGroupMember -ErrorAction SilentlyContinue -BypassSecurityGroupManagerCheck -Identity $_ -Member $TargetDN}  # add groups to user with exchange module

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api.v1.endpoints import router as api_router
+from app.api.v1.endpoints import router as api_router, add_middleware
 
 logger = setup_logging()
 
@@ -11,6 +11,8 @@ app = FastAPI(
     version=settings.VERSION,
     description="MS Graph API Automation"
 )
+
+add_middleware(app)
 
 app.include_router(api_router, prefix="/api/v1")
 
