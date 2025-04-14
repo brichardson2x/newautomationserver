@@ -178,7 +178,7 @@ class UserService:
             if self.user.manager is not None:
                 params = find_user_params(self.user.manager)
                 response = requests.get(url, headers=headers, params=params)
-                if response.status_code == 200:
+                if response.status_code == 200 and response.json().get("value", []):
                     logger.debug("Manager found")
                     user_response.message += ". Manager found"
                     manager = response.json()
