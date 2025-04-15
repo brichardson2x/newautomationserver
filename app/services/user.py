@@ -247,3 +247,42 @@ class UserService:
 
         return user_response
     
+    async def nat_user(self):
+        logger.debug("NAT'ing user")
+        ms_token = await generate_token()
+
+        headers = {
+            "Authorization": f"Bearer {ms_token}",
+            "Content-Type": "application/json"
+        }
+
+        url = f"{settings.MS_API_URL}/users"
+        params = find_user_params(f"{self.user.displayname}")
+
+        response = requests.get(url, headers=headers, params=params)
+
+        logger.debug(response.status_code)
+
+        if response.status_code == 200 and response.json()["value"]:
+            logger.debug("User found")
+            userdata = response.json()
+            user_id = userdata["value"][0]["id"]
+
+        logger.debug("Removing licenses from user")
+        url = f"{settings.MS_API_URL}/users/{user_id}/assignLicense"
+        license_request = assign_license_request(user_id)
+        response = requests.post(url, headers=headers, data=license_request)
+        if response.status_code == 200:
+            logger.debug("Licenses removed")
+
+        logger.debug("Disable user")
+        url = f"{settings.MS_API_URL}/users/{user_id}"
+        request = {
+            "accountEnabled": False
+        }
+        request = json.dumps(request)
+        response = requests.patch(url, headers=headers, data=request)
+        if response.status_code == 204:
+            logger.debug("User disabled")
+
+        

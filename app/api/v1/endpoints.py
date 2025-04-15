@@ -13,3 +13,9 @@ async def create_user(user: UserSchema):
     logger.debug("Entered create_user endpoint")
     user = UserService(user)
     return await user.create_user()
+
+@router.post("/user/nat", response_model=UserResponse)
+async def nat_user(user: UserSchema):
+    logger.debug("Entered nat_user endpoint")
+    user = UserService(user)
+    return await user.nat_user()
