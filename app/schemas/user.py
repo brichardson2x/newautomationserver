@@ -28,6 +28,8 @@ class UserSchema(BaseModel):
     groups: Optional[Dict] = None
     password: str = settings.DEFAULT_PASSWORD
     autoreply: Optional[str] = None
+    shared_mailbox: Optional[str] = None
+    shared_onedrive: Optional[str] = None
 
     @model_validator(mode="after")
     def set_email_username(self):
@@ -47,7 +49,15 @@ class UserSchema(BaseModel):
             
         return self
 
-
+    @model_validator(mode="after")
+    def name_cleanup(self):
+        logger.debug("Cleaning up names")
+        if "," in self.shared_mailbox:
+            self.shared_mailbox = self.shared_mailbox.split(",")[0]
+        if "," in self.shared_onedrive:
+            self.shared_onedrive = self.shared_onedrive.split(",")[0]
+        
+        return self
     
 class UserResponse(BaseModel):
     logger.debug("Setting up UserResponse")
