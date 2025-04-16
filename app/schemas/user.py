@@ -52,11 +52,22 @@ class UserSchema(BaseModel):
     @model_validator(mode="after")
     def name_cleanup(self):
         logger.debug("Cleaning up names")
+        
+        self.shared_mailbox = self.shared_mailbox.replace(" ","")
+        self.shared_onedrive = self.shared_onedrive.replace(" ","")
+        
+        if "." in self.shared_mailbox:
+            self.shared_mailbox = self.shared_mailbox.replace(".", " ")
+        if "." in self.shared_onedrive:
+            self.shared_onedrive = self.shared_onedrive.replace(".", " ")
+
         if "," in self.shared_mailbox:
             self.shared_mailbox = self.shared_mailbox.split(",")[0]
         if "," in self.shared_onedrive:
             self.shared_onedrive = self.shared_onedrive.split(",")[0]
         
+
+
         return self
     
 class UserResponse(BaseModel):
