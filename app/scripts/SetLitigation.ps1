@@ -43,3 +43,12 @@ try {
 } catch {
     Write-Host "ERROR: Failed to add Litigation Hold to $UserAccount. Error: $_"
 }
+
+Write-Host "Converting to Shared Mailbox"
+try {
+    Set-Mailbox $UserAccount -Type Shared
+    Write-Host "Successfully converted $UserAccount to Shared Mailbox"
+}
+catch {
+    Write-Host "ERROR: Failed to convert $UserAccount to Shared Mailbox. Error: $_"
+}
