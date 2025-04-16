@@ -27,6 +27,7 @@ class UserSchema(BaseModel):
     cloned_user: Optional[str] = None
     groups: Optional[Dict] = None
     password: str = settings.DEFAULT_PASSWORD
+    autoreply: Optional[str] = None
 
     @model_validator(mode="after")
     def set_email_username(self):

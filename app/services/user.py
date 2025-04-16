@@ -89,7 +89,41 @@ def assign_user_group(user_name: str, cloned_user: str, bearer_token: str):
         logger.error(f"Unexecpected error assigning user to group")
         return False
 
+def set_litigation_hold(user_upn: str):
+    logger.debug("Setting litigation hold")
+    try:
+        script_path = Path(__file__).resolve().parent.parent / "scripts" / "SetLitigationHold.ps1"
+        command = ["pwsh.exe", "-ExecutionPolicy", "Bypass", "-File", script_path, settings.SERVICE_ACCOUNT, settings.SERVICE_ACCOUNT_PASSWORD, user_upn]
+        subprocess.run(command, capture_output=True, text=True, check=True)
 
+        return True
+
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error setting litigation hold")
+    except FileNotFoundError as e:
+        logger.error(f"Error finding script")
+    except Exception as e:
+        logger.error(f"Unexecpected error setting litigation hold")
+
+def set_autoreply_message(user_upn: str, autoreply_message):
+    if not autoreply_message:
+        logger.debug("No autoreply message set")
+        return False
+    
+    logger.debug("Setting litigation hold")
+    try:
+        script_path = Path(__file__).resolve().parent.parent / "scripts" / "SetAutoReply.ps1"
+        command = ["pwsh.exe", "-ExecutionPolicy", "Bypass", "-File", script_path, settings.SERVICE_ACCOUNT, settings.SERVICE_ACCOUNT_PASSWORD, user_upn, autoreply_message]
+        subprocess.run(command, capture_output=True, text=True, check=True)
+
+        return True
+
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error setting autoreply")
+    except FileNotFoundError as e:
+        logger.error(f"Error finding script")
+    except Exception as e:
+        logger.error(f"Unexecpected error setting autorpely")
 
 
 class UserService:
@@ -267,6 +301,7 @@ class UserService:
             logger.debug("User found")
             userdata = response.json()
             user_id = userdata["value"][0]["id"]
+            user_upn = userdata["value"][0]["userPrincipalName"]
 
         logger.debug("Removing licenses from user")
         url = f"{settings.MS_API_URL}/users/{user_id}/assignLicense"
@@ -285,4 +320,16 @@ class UserService:
         if response.status_code == 204:
             logger.debug("User disabled")
 
-        
+        logger.debug("Setting litigation hold")
+        result = set_litigation_hold(user_upn)
+        if result:
+            logger.debug("Litigation hold set")
+        else:
+            logger.error("Litigation hold not set")
+
+        logger.debug("Setting autoreply message")
+        result = set_autoreply_message(user_upn, self.user.autoreply)
+        if result:
+            logger.debug("Autoreply message set")
+        else:
+            logger.error("Autoreply message not set")
