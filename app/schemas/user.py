@@ -53,19 +53,19 @@ class UserSchema(BaseModel):
     def name_cleanup(self):
         logger.debug("Cleaning up names")
         
+        if self.shared_mailbox:
+                if "." in self.shared_mailbox:
+                    self.shared_mailbox = self.shared_mailbox.replace(".", " ")    
+                if "," in self.shared_mailbox:
+                    self.shared_mailbox = self.shared_mailbox.split(",")[0]
+                    self.shared_mailbox = [mailbox.strip() for mailbox in self.shared_mailbox]
 
-
-        if "." in self.shared_mailbox:
-            self.shared_mailbox = self.shared_mailbox.replace(".", " ")
-        if "." in self.shared_onedrive:
-            self.shared_onedrive = self.shared_onedrive.replace(".", " ")
-
-        if "," in self.shared_mailbox:
-            self.shared_mailbox = self.shared_mailbox.split(",")[0]
-            self.shared_mailbox = [mailbox.strip() for mailbox in self.shared_mailbox]
-        if "," in self.shared_onedrive:
-            self.shared_onedrive = self.shared_onedrive.split(",")[0]
-            self.shared_onedrive = [onedrive.strip() for onedrive in self.shared_onedrive]
+        if self.shared_onedrive:
+            if "." in self.shared_onedrive:
+                self.shared_onedrive = self.shared_onedrive.replace(".", " ")
+            if "," in self.shared_onedrive:
+                self.shared_onedrive = self.shared_onedrive.split(",")[0]
+                self.shared_onedrive = [onedrive.strip() for onedrive in self.shared_onedrive]
 
 
         return self

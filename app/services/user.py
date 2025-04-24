@@ -302,6 +302,9 @@ class UserService:
             userdata = response.json()
             user_id = userdata["value"][0]["id"]
             user_upn = userdata["value"][0]["userPrincipalName"]
+        else:
+            logger.error("User not found")
+            raise HTTPException(status_code=404, detail="User not found")
 
         logger.debug("Removing licenses from user")
         url = f"{settings.MS_API_URL}/users/{user_id}/assignLicense"
