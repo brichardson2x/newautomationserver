@@ -82,3 +82,4 @@ class UserResponse(BaseModel):
         json_encoders = {
             type(None): lambda v: None  # Explicitly serialize None as null
         }
+
