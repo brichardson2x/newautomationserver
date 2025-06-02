@@ -7,6 +7,8 @@ param (
     [string]$CloneUserAccount
 )
 
+Add-MailboxFolderPermission -Identity peopleteam@daxko.com:\Calendar\Test2 -User testteamIT2@daxko.com -AccessRights ReadItems
+
 $ErrorActionPreference = "SilentlyContinue"
 $requiredModules = @("ExchangeOnlineManagement", "Microsoft.Graph.Users", "Microsoft.Graph.Groups")
 
