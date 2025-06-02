@@ -7,8 +7,6 @@ param (
     [string]$CloneUserAccount
 )
 
-Add-MailboxFolderPermission -Identity peopleteam@daxko.com:\Calendar\Test2 -User testteamIT2@daxko.com -AccessRights ReadItems
-
 $ErrorActionPreference = "SilentlyContinue"
 $requiredModules = @("ExchangeOnlineManagement", "Microsoft.Graph.Users", "Microsoft.Graph.Groups")
 
@@ -84,6 +82,8 @@ Write-Host "$ExchangeGroups"
 Start-Sleep -Seconds 5
 
 Write-Host "Checking if Target User passed is display name or UPN"
+Add-MailboxFolderPermission -Identity peopleteam@daxko.com:\Calendar\Test2 -User testteamIT2@daxko.com -AccessRights ReadItems
+
 if ($TargetUserAccount -match "\s") {
     Write-Host "Getting User by Display Name"
     $TargetId = Get-MgUser -Filter "DisplayName eq '$TargetUserAccount'"
