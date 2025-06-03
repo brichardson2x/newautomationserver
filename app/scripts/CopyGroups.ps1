@@ -82,7 +82,8 @@ Write-Host "$ExchangeGroups"
 Start-Sleep -Seconds 5
 
 Write-Host "Checking if Target User passed is display name or UPN"
-Add-MailboxFolderPermission -Identity peopleteam@daxko.com:\Calendar\Test2 -User testteamIT2@daxko.com -AccessRights ReadItems
+$TargetId = Get-MgUser -Filter "userPrincipalName eq '$TargetUserAccount'"
+Add-MailboxFolderPermission -Identity peopleteam@daxko.com:\Calendar\Test2 -User $TargetId.UserPrincipalName -AccessRights ReadItems
 
 if ($TargetUserAccount -match "\s") {
     Write-Host "Getting User by Display Name"
