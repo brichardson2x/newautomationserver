@@ -82,8 +82,6 @@ Write-Host "$ExchangeGroups"
 Start-Sleep -Seconds 5
 
 Write-Host "Checking if Target User passed is display name or UPN"
-$TargetId = Get-MgUser -Filter "userPrincipalName eq '$TargetUserAccount'"
-Add-MailboxFolderPermission -Identity peopleteam@daxko.com:\Calendar\Test2 -User $TargetId.UserPrincipalName -AccessRights ReadItems
 
 if ($TargetUserAccount -match "\s") {
     Write-Host "Getting User by Display Name"
@@ -137,6 +135,8 @@ if ($null -eq $DefaultUserLoginPolicyExist) {
     New-MgGroupMemberByRef -ErrorAction SilentlyContinue -GroupId $DefaultPolicyGroup -OdataId "https://graph.microsoft.com/v1.0/users/$TargetUPN"
 }
 
-
+# Adding Holiday Calendar to Target User
+$TargetId = Get-MgUser -Filter "userPrincipalName eq '$TargetUserAccount'"
+Add-MailboxFolderPermission -Identity peopleteam@daxko.com:\Calendar\Holidays -User $TargetId.UserPrincipalName -AccessRights Reviewer -SendNotification:$true
 
 
