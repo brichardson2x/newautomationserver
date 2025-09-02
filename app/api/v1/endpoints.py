@@ -5,7 +5,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from app.schemas.user import UserSchema, UserResponse
-from app.services.user import UserService
+from app.services.user_create import UserCreateService
+from app.services.user_remove import UserRemoveService
 from app.core.logging import setup_logging
 from app.dependencies import read_security
 from app.core.config import settings
@@ -28,7 +29,7 @@ async def add_middleware(app):
 @limiter.limit("7/minute")
 async def create_user(request: Request, user: UserSchema, background_tasks: BackgroundTasks):
     logger.debug("Entered create_user endpoint")
-    service = UserService(user)
+    service = UserCreateService(user)
     return await service.create_user(background_tasks=background_tasks)
 
 
@@ -40,7 +41,7 @@ async def remove_user(request: Request, user: UserSchema):
     Returns 501 Not Implemented until service logic is added.
     """
     logger.debug("Entered remove_user endpoint")
-    service = UserService(user)
+    service = UserRemoveService(user)
     result = await service.remove_user()
     # remove_user is a stub; return 501 for now
     return JSONResponse(status_code=501, content={"message": "remove_user not implemented"})
