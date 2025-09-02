@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     ASSIGNED_LICENSES: Any
     SERVICE_ACCOUNT: str
     SERVICE_ACCOUNT_PASSWORD: str
+    # Celery / background job configuration
+    CELERY_BROKER_URL: str | None = None
+    CELERY_RESULT_BACKEND: str | None = None
+    # Directory to write small status files for long-running jobs
+    STATUS_DIR: str = "/tmp/newautomationserver_status"
     FASTAPI_DEBUG: bool
     FASTAPI_HOST: str
     FASTAPI_PORT: int
