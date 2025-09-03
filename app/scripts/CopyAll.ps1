@@ -18,13 +18,28 @@ param(
     [string]$SourceUser,
 
     [Parameter(Mandatory=$true)]
-    [string]$TargetUser
+    [string]$TargetUser,
+
+    # Programmatic auth parameters
+    [Parameter(Mandatory=$true)]
+    [string]$BearerToken,
+
+    [Parameter(Mandatory=$true)]
+    [string]$ServiceAccountUser,
+
+    [Parameter(Mandatory=$true)]
+    [string]$ServicePass
 )
+
+### convert credentials/token once for programmatic execution
+$securepass = ConvertTo-SecureString $ServicePass -AsPlainText -Force
+$securebearer = ConvertTo-SecureString $BearerToken -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential ($ServiceAccountUser, $securepass)
 
 ### --- Exchange Online Section (Mail-Enabled Groups) ---
 Write-Host "`n=== [Step 1] Connecting to Exchange Online ==="
 try {
-    Connect-ExchangeOnline -ShowBanner:$false -ErrorAction Stop
+    Connect-ExchangeOnline -Credential $credential -ShowBanner:$false -ErrorAction Stop
 
     # Retry loop for Exchange provisioning
     $maxRetries = 60   # 30 minutes
@@ -74,7 +89,8 @@ try {
 ### --- Graph Section (Non-Mail-Enabled Groups) ---
 Write-Host "`n=== [Step 2] Connecting to Microsoft Graph ==="
 try {
-    Connect-MgGraph -Scopes "Group.ReadWrite.All","User.Read.All" -ErrorAction Stop -NoWelcome
+    # Connect once using the bearer token provided programmatically
+    Connect-MgGraph -AccessToken $securebearer -ErrorAction Stop -NoWelcome
 
     # Retry loop for Graph provisioning
     $maxRetries = 12   # 6 minutes
