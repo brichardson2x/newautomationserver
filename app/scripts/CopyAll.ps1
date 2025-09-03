@@ -25,10 +25,13 @@ param(
     [string]$BearerToken,
 
     [Parameter(Mandatory=$true)]
-    [string]$ServiceAccountUser,
+    [string]$AppId,
 
     [Parameter(Mandatory=$true)]
-    [string]$ServicePass
+    [string]$TenantId,
+
+    [Parameter(Mandatory=$true)]
+    [string]$AppPassword
 )
 
 ### convert credentials/token once for programmatic execution
@@ -36,10 +39,16 @@ $securepass = ConvertTo-SecureString $ServicePass -AsPlainText -Force
 $securebearer = ConvertTo-SecureString $BearerToken -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential ($ServiceAccountUser, $securepass)
 
+# AppID Login prep
+$Tenant = "daxkomail.onmicrosoft.com"
+$CertPath = "/cert/certificate.pfx"
+$CertPassword = ConvertTo-SecureString -String $AppPassword -AsPlainText -Force
+$Cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($CertPath, $CertPassword)
+
 ### --- Exchange Online Section (Mail-Enabled Groups) ---
 Write-Host "`n=== [Step 1] Connecting to Exchange Online ==="
 try {
-    Connect-ExchangeOnline -Credential $credential -ErrorAction Stop
+    Connect-ExchangeOnline -AppId $AppId -Organization $Tenant -Certificate $Cert
 
     # Retry loop for Exchange provisioning
     $maxRetries = 60   # 30 minutes
@@ -90,7 +99,9 @@ try {
 Write-Host "`n=== [Step 2] Connecting to Microsoft Graph ==="
 try {
     # Connect once using the bearer token provided programmatically
-    Connect-MgGraph -AccessToken $securebearer -ErrorAction Stop -NoWelcome
+    $Scopes = "User.ReadWrite.All", "Group.ReadWrite.All"
+    Connect-MgGraph -ClientId $AppId -TenantId $TenantId -CertificateThumbprint $Cert.Thumbprint -Scopes $Scopes
+    # Connect-MgGraph -AccessToken $securebearer -ErrorAction Stop -NoWelcome
 
     # Retry loop for Graph provisioning
     $maxRetries = 12   # 6 minutes
