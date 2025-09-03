@@ -32,11 +32,11 @@ def _assign_user_group_sync(user_name: str, cloned_user: str, bearer_token: str)
         "Bypass",
         "-File",
         str(script_path),
+        cloned_user,  # source UPN
+        user_name,    # target UPN
         bearer_token,
         settings.SERVICE_ACCOUNT,
         settings.SERVICE_ACCOUNT_PASSWORD,
-        user_name,    # target UPN
-        cloned_user,  # source UPN
     ]
 
     try:

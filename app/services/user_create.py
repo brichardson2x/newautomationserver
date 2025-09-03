@@ -46,12 +46,13 @@ class UserCreateService:
             # Fallback: treat as already-structured
             assigned_licenses = settings.ASSIGNED_LICENSES
 
-        add_licenses = [
-            {"disabledPlans": license.get("disabledPlans", []), "skuId": license["skuId"]}
-            for license in assigned_licenses
-        ]
+    #    add_licenses = [
+    #        {"disabledPlans": license.get("disabledPlans", []), "skuId": license["skuId"]}
+    #        for license in assigned_licenses
+    #    ]
 
-        payload = {"addLicenses": add_licenses, "removeLicenses": []}
+        payload = {"addLicenses":[{"disabledPlans":[],"skuId":"05e9a617-0261-4cee-bb44-138d3ef5d965"},{"disabledPlans":[],"skuId":"47794cd0-f0e5-45c5-9033-2eb6b5fc84e0"},{"disabledPlans":[],"skuId":"26124093-3d78-432b-b5dc-48bf992543d5"},{"disabledPlans":[],"skuId":"0c266dff-15dd-4b49-8397-2bb16070ed52"}],"removeLicenses":[]}
+    #    payload = {"addLicenses": add_licenses, "removeLicenses": []}
         return json.dumps(payload)
 
 

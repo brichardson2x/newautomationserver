@@ -39,7 +39,7 @@ $credential = New-Object System.Management.Automation.PSCredential ($ServiceAcco
 ### --- Exchange Online Section (Mail-Enabled Groups) ---
 Write-Host "`n=== [Step 1] Connecting to Exchange Online ==="
 try {
-    Connect-ExchangeOnline -Credential $credential -ShowBanner:$false -ErrorAction Stop
+    Connect-ExchangeOnline -Credential $credential -ErrorAction Stop
 
     # Retry loop for Exchange provisioning
     $maxRetries = 60   # 30 minutes

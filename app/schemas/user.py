@@ -48,7 +48,7 @@ class UserSchema(BaseModel):
     
     @model_validator(mode="after")
     def normalize_manager_name(self):
-        if "." in self.manager:
+        if self.manager and "." in self.manager:
             logger.debug("Normalizing manager name")
             parts = self.manager.split(".")
             self.manager = " ".join(parts).title()
