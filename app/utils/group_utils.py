@@ -2,9 +2,11 @@ from app.core.logging import setup_logging
 from app.core.config import settings
 from pathlib import Path
 import subprocess
-from fastapi import BackgroundTasks
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import asyncio
+if TYPE_CHECKING:
+    # Only import for type checking / IDEs; avoids pulling FastAPI into the worker runtime
+    from fastapi import BackgroundTasks
 from app.utils.send_slack import send_slack
 
 logger = setup_logging()
@@ -99,7 +101,7 @@ async def _assign_user_group_background(user_name: str, cloned_user: str, bearer
         logger.exception("Unexpected exception while running background group assignment for %s", user_name)
 
 
-def schedule_assign_user_group(background_tasks: Optional[BackgroundTasks], user_name: str, cloned_user: str, bearer_token: str, user_response_json: Optional[str] = None) -> bool:
+def schedule_assign_user_group(background_tasks: Optional['BackgroundTasks'], user_name: str, cloned_user: str, bearer_token: str, user_response_json: Optional[str] = None) -> bool:
     """Schedule the group assignment.
 
     If `background_tasks` is provided, schedule the copy and return True (scheduled).
